@@ -15,10 +15,22 @@
         return;
     }
 
+    $('body').append('<style>' + [
+        '.dl-list { width: 300px; margin: 0 auto; }',
+        '.dl-list-item { text-align: left; height: 25px; border-bottom: 1px solid #e0dcdc; margin-top: 3px; }',
+        '.dl-list-item:last-child { border: none; }',
+        '.dl-list-item.new { color: tomato; }',
+        '.dl-cleanup-button { border: 1px solid transparent; background-color: transparent; cursor: pointer; }',
+        '.dl-cleanup-button:after { display: block; height: 15px; background-color: #FA9595; margin: auto; padding: 2px; border-radius: 4px; text-align: center; color: white; font-weight: normal; font-size: 12px; box-shadow: 0 0 2px #E50F0F; cursor: pointer; }',
+        '.dl-remove { float: right; }',
+        '.dl-remove:after { content: "X"; width: 15px; }',
+        '.dl-clear:after { content: "Clear"; width: 35px; }'
+    ].join(' ') + '</style>');
+
     var UrlCollection = function(storage) {
         var items = storage.getItem('links') ? JSON.parse(localStorage.getItem('links')) : [];
 
-        document.querySelector('.lienet').outerHTML += '<ol class="dl-list" style="width: 300px; margin: 0 auto;"></ol>';
+        document.querySelector('.lienet').outerHTML += '<button class="dl-cleanup-button dl-clear"></button><ol class="dl-list"></ol><button class="dl-cleanup-button dl-clear"></button>';
         var dom = document.querySelector('.dl-list');
 
         /**
@@ -26,7 +38,7 @@
          * @param {boolean} isNew
          */
         var render = function(url, isNew) {
-            return '<li style="text-align: left;' + (isNew ? ' color: tomato;' : '') + '"><span>' + url + '</span> <span class="dl-remove" style="float: right;">X</span></li>';
+            return '<li class="dl-list-item' + (isNew ? ' new' : '') + '"><span>' + url + '</span> <button class="dl-cleanup-button dl-remove" type="button"></button></li>';
         };
 
         /**
@@ -65,11 +77,22 @@
                 }
 
                 var index = items.indexOf(url);
-                var element = dom.querySelector('li:nth-child(' + (index + 1) + ')');
+                var element = dom.querySelector('.dl-list-item:nth-child(' + (index + 1) + ')');
 
                 items.splice(index, 1);
                 element.parentElement.removeChild(element);
                 storage.setItem('links', JSON.stringify(items));
+            },
+
+            /**
+             *
+             */
+            clear: function() {
+                var index = items.length;
+
+                while (--index > -1) {
+                    this.remove(items[index]);
+                }
             },
 
             /**
@@ -91,6 +114,9 @@
 
     $('.dl-list').on('click', '.dl-remove', function() {
         collection.remove(this.previousElementSibling.textContent);
+    });
+    $('.dl-clear').on('click', function() {
+        collection.clear();
     });
 
     collection.print();
