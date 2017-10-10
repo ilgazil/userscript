@@ -12,7 +12,7 @@
     'use strict';
 
     $('body').append('<style>' + [
-        '#h237, .content center {display: none !important}',
-        '#h237 ~ .content {display: inherit !important}'
+        '#h237, .content center > a, .header, .footer { display: none !important; }',
+        '#h237 ~ .content { display: inherit !important; margin-top: 0; }'
     ].join(' ') + '</style>');
 })();
