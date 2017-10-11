@@ -6,17 +6,86 @@
 // @author       Monk
 // @match        https://www.protect-lien.com/*
 // @match        https://www.protect-zt.com/*
+// @match        https://ed-protect.org/*
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    if (!document.querySelector('.lienet')) {
+    /**
+     * @class
+     *
+     * @param ({string}|{UrlFinder[]}) selector - CSS selector for locating link (a tag) elements. Can be a collection of UrlFinder
+     */
+    var UrlFinder = function(selector) {
+        var urls = [];
+        var anchor;
+
+        return {
+            /**
+             * Returns finder urls
+             */
+            urls: function () {
+                if (!urls.length) {
+                    // If collection of UrlFinder, we concat all finder urls
+                    if (Array.isArray(selector)) {
+                        selector.forEach(function (finder) {
+                            urls = urls.concat(finder.urls());
+                        });
+                    } else {
+                        var elements = document.querySelectorAll(selector);
+
+                        if (elements.length) {
+                            elements.forEach(function(element) {
+                                urls.push(element.href);
+                            });
+                        }
+                    }
+                }
+
+                return urls;
+            },
+
+            /**
+             *
+             */
+            hasUrls: function () {
+                return !!this.urls().length;
+            },
+
+            /**
+             *
+             */
+            anchor: function() {
+                if (!anchor) {
+                    // If collection of UrlFinder, we return the first valid anchor
+                    if (Array.isArray(selector)) {
+                        selector.some(function (finder) {
+                            anchor = finder.anchor();
+
+                            return !!anchor;
+                        });
+                    } else {
+                        anchor = document.querySelector(selector.split(' ')[0]);
+                    }
+                }
+
+                return anchor;
+            }
+        };
+    };
+
+    var finder = new UrlFinder([
+        new UrlFinder('.lienet a'),
+        new UrlFinder('.contenu_liens table.affichier_lien tr:not(.hellooo) td:nth-child(2) a')
+    ]);
+
+    if (!finder.hasUrls()) {
         return;
     }
 
     $('body').append('<style>' + [
-        '.dl-list { width: 300px; margin: 0 auto; }',
+        '.dl-wrapper { width: 300px; margin: 5px auto 0; text-align: center; }',
         '.dl-list-item { text-align: left; height: 25px; border-bottom: 1px solid #e0dcdc; margin-top: 3px; }',
         '.dl-list-item:last-child { border: none; }',
         '.dl-list-item.new { color: tomato; }',
@@ -27,10 +96,10 @@
         '.dl-clear:after { content: "Clear"; width: 35px; }'
     ].join(' ') + '</style>');
 
-    var UrlCollection = function(storage) {
+    var UrlCollection = function(storage, anchor) {
         var items = storage.getItem('links') ? JSON.parse(localStorage.getItem('links')) : [];
 
-        document.querySelector('.lienet').outerHTML += '<button class="dl-cleanup-button dl-clear"></button><ol class="dl-list"></ol><button class="dl-cleanup-button dl-clear"></button>';
+        anchor.outerHTML += '<div class="dl-wrapper"><button class="dl-cleanup-button dl-clear"></button><ol class="dl-list"></ol><button class="dl-cleanup-button dl-clear"></button></div>';
         var dom = document.querySelector('.dl-list');
 
         /**
@@ -110,7 +179,7 @@
         };
     };
 
-    var collection = new UrlCollection(localStorage);
+    var collection = new UrlCollection(localStorage, finder.anchor());
 
     $('.dl-list').on('click', '.dl-remove', function() {
         collection.remove(this.previousElementSibling.textContent);
@@ -120,5 +189,7 @@
     });
 
     collection.print();
-    collection.add(document.querySelector('.lienet a').href);
+    finder.urls().forEach(function(url) {
+        collection.add(url);
+    });
 })();
