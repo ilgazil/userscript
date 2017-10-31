@@ -6,6 +6,8 @@
 // @author       Monk
 // @match        https://www.protect-lien.com/*
 // @match        https://www.protect-zt.com/*
+// @match        https://www.protecte-link.com/*
+// @match        https://www.liens-telechargement.com/*
 // @match        https://ed-protect.org/*
 // ==/UserScript==
 
