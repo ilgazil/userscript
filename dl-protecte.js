@@ -1,6 +1,5 @@
 // ==UserScript==
 // @name         dl-protecte
-// @namespace    Monk
 // @version      0.1
 // @description  Grab links from dl-protecte and such
 // @author       Monk
@@ -9,6 +8,7 @@
 // @match        https://www.protecte-link.com/*
 // @match        https://www.liens-telechargement.com/*
 // @match        https://ed-protect.org/*
+// @match        https://www.dl-protect1.com/*
 // ==/UserScript==
 
 (function() {
@@ -86,7 +86,7 @@
         return;
     }
 
-    $('body').append('<style>' + [
+    document.querySelector('body').innerHTML += '<style>' + [
         '.dl-wrapper { width: 300px; margin: 5px auto 0; text-align: center; }',
         '.dl-list-item { text-align: left; height: 25px; border-bottom: 1px solid #e0dcdc; margin-top: 3px; }',
         '.dl-list-item:last-child { border: none; }',
@@ -96,7 +96,7 @@
         '.dl-remove { float: right; }',
         '.dl-remove:after { content: "X"; width: 15px; }',
         '.dl-clear:after { content: "Clear"; width: 35px; }'
-    ].join(' ') + '</style>');
+    ].join(' ') + '</style>';
 
     var UrlCollection = function(storage, anchor) {
         var items = storage.getItem('links') ? JSON.parse(localStorage.getItem('links')) : [];
@@ -183,10 +183,12 @@
 
     var collection = new UrlCollection(localStorage, finder.anchor());
 
-    $('.dl-list').on('click', '.dl-remove', function() {
-        collection.remove(this.previousElementSibling.textContent);
+    document.querySelector('.dl-list').addEventListener('click', function(e) {
+        if (e.target && e.target.matches('.dl-remove')) {
+            collection.remove(e.target.previousElementSibling.textContent);
+        }
     });
-    $('.dl-clear').on('click', function() {
+    document.querySelector('.dl-clear').addEventListener('click', function(e) {
         collection.clear();
     });
 
