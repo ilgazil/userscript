@@ -1,0 +1,25 @@
+// ==UserScript==
+// @name         open-food-barcode
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Add barcode to openFoodFact
+// @match        https://fr.openfoodfacts.org/produit/*
+// @match        https://world.openfoodfacts.org/product/*
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    const element = document.querySelector('span[property="food:code"]')
+
+    if (!element) {
+        console.log('return');
+        return;
+    }
+
+    function barCode(serial) {
+        return '<img src="https://barcode.tec-it.com/barcode.ashx?data=' + serial + '&code=EAN13" alt="Barcode"/>'
+    };
+
+    element.parentElement.innerHTML += barCode(element.innerHTML);
+})();
