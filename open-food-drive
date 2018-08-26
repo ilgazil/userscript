@@ -1,0 +1,33 @@
+// ==UserScript==
+// @name         open-food-drive
+// @version      0.1
+// @description  Links drive markets with OpenFoodFacts
+// @match        https://drive.intermarche.com/*
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    function scan () {
+        if (!document.querySelector('li.js-vignette_produit')) {
+            return;
+        }
+
+        document.querySelectorAll('li.js-vignette_produit div.vignette_info:not(.scanned)').forEach(sheet => {
+            const url = 'https://fr.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&search_terms=' + sheet.children[0].textContent;
+
+            const content = sheet.children[1].textContent.trim().split(' ').reduce((content, word) => {
+                if (!word) {
+                    return content;
+                }
+
+                return content + ' <a href="' + url + '+' + word + '" target="_blank"><img src="https://nutrition.yuka.io/themes/yuka/favicon.ico" style="height: 11px;"/>' + word + '</a>';
+            }, '');
+
+            sheet.children[1].innerHTML = content;
+            sheet.className += ' scanned';
+        });
+    }
+
+    setInterval(scan, 100);
+})();
