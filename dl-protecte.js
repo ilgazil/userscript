@@ -7,8 +7,10 @@
 // @match        https://www.protect-zt.com/*
 // @match        https://www.protecte-link.com/*
 // @match        https://www.liens-telechargement.com/*
+// @match        http://ed-protect.org/*
 // @match        https://ed-protect.org/*
 // @match        https://www.dl-protect1.com/*
+// @match        https://time2watch.in/*
 // ==/UserScript==
 
 (function() {
@@ -19,9 +21,8 @@
      *
      * @param ({string}|{UrlFinder[]}) selector - CSS selector for locating link (a tag) elements. Can be a collection of UrlFinder
      */
-    var UrlFinder = function(selector) {
+    var UrlFinder = function(selector, anchor) {
         var urls = [];
-        var anchor;
 
         return {
             /**
@@ -59,7 +60,9 @@
              *
              */
             anchor: function() {
-                if (!anchor) {
+                if (typeof anchor === 'function') {
+                    return anchor();
+                } else if (!anchor) {
                     // If collection of UrlFinder, we return the first valid anchor
                     if (Array.isArray(selector)) {
                         selector.some(function (finder) {
@@ -79,7 +82,8 @@
 
     var finder = new UrlFinder([
         new UrlFinder('.lienet a'),
-        new UrlFinder('.contenu_liens table.affichier_lien tr:not(.hellooo) td:nth-child(2) a')
+        new UrlFinder('.contenu_liens table.affichier_lien tr:not(.hellooo) td:nth-child(2) a'),
+        new UrlFinder('a[href*=uptobox]', () => document.querySelector('h1 + div h4 + div'))
     ]);
 
     if (!finder.hasUrls()) {
@@ -188,8 +192,10 @@
             collection.remove(e.target.previousElementSibling.textContent);
         }
     });
-    document.querySelector('.dl-clear').addEventListener('click', function(e) {
-        collection.clear();
+    document.querySelectorAll('.dl-clear').forEach(domElement => {
+        domElement.addEventListener('click', function(e) {
+            collection.clear();
+        });
     });
 
     collection.print();
