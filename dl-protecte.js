@@ -11,6 +11,7 @@
 // @match        https://ed-protect.org/*
 // @match        https://www.dl-protect1.com/*
 // @match        https://time2watch.in/*
+// @match        https://www.journaldupirate.net/go_to/*
 // ==/UserScript==
 
 (function() {
@@ -83,7 +84,8 @@
     var finder = new UrlFinder([
         new UrlFinder('.lienet a'),
         new UrlFinder('.contenu_liens table.affichier_lien tr:not(.hellooo) td:nth-child(2) a'),
-        new UrlFinder('a[href*=uptobox]', () => document.querySelector('h1 + div h4 + div'))
+        new UrlFinder('a[href*=uptobox]', () => document.querySelector('h1 + div h4 + div')),
+        new UrlFinder('.content-body--right .alert a')
     ]);
 
     if (!finder.hasUrls()) {
