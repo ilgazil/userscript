@@ -4,21 +4,34 @@
 // @description  Grab links from dl-protecte and such
 // @author       Monk
 // @match        https://*.journaldupirate.net/go_to*
+// @match        https://decotoday.net/*
 // ==/UserScript==
 
 (() => {
-  const formElement = document.querySelector('.content-body form')
+  class PageObject {
+    constructor(url) {
+      if (/.*journaldupirate.*/.exec(url)) {
+        this.form = document.querySelector('.content-body form');
+        this.link = document.querySelector('.content-body .alert a');
+        this.alert = document.querySelector('.content-body .alert');
+      } else if (/.*decotoday.*/.exec(url)) {
+        this.form = document.querySelector('.page-content form');
+        this.link = document.querySelector('.page-content .alert a');
+        this.alert = document.querySelector('.page-content .alert');
+      }
+    }
+  }
+
+  const page = new PageObject(window.location);
 
   // If form is present, it should be submitted to continue
-  if (formElement) {
-    formElement.submit();
+  if (page.form) {
+    page.form.submit();
     return;
   }
 
-  const linkElement = document.querySelector('.content-body .alert a');
-
   // If no link is present, then the page is probably not a link protection page
-  if (!linkElement) {
+  if (!page.link) {
     return;
   }
 
@@ -41,12 +54,14 @@
   }
 
   // Filter duplicate urls
-  if (!urls.includes(linkElement.href)) {
-    urls.push(linkElement.href);
+  if (!urls.includes(page.link.href)) {
+    urls.push(page.link.href);
     localStorage.setItem('urls', JSON.stringify(urls));
   }
 
-  const alertElement = document.querySelector('.content-body .alert');
+  if (!page.alert) {
+    return;
+  }
 
   // Create reset button
   const resetButtonElement = document.createElement('div');
@@ -94,18 +109,18 @@
   function writeListContent() {
     listElement.innerHTML = urls.map((url) => {
       if (!prefixInputElement.value) {
-        return `<li>${url}</li>`;
+        return `<li class="ml-4">${url}</li>`;
       }
 
-      return `<li class="text-gray-400">${prefixInputElement.value.replace('[url]', `<span class="text-black">${url}</span>`)}</li>`;
+      return `<li class="ml-4 text-gray-400">${prefixInputElement.value.replace('[url]', `<span class="text-gray-600">${url}</span>`)}</li>`;
     }).join('');
   }
 
   // Create url list
   const listElement = document.createElement('ol');
-  listElement.className = 'mt-1 ml-2 border-l-4 border-grey-300 pl-6 select-none list-decimal';
+  listElement.className = 'my-1 ml-2 border-l-4 border-grey-300 pl-6 select-none list-decimal';
   writeListContent();
-  alertElement.parentElement.insertBefore(listElement, alertElement.nextSibling);
+  page.alert.parentElement.insertBefore(listElement, page.alert);
 
-  alertElement.parentElement.insertBefore(actionWrapperElement, listElement);
+  page.alert.parentElement.insertBefore(actionWrapperElement, listElement);
 })();
