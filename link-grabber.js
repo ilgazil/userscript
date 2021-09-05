@@ -83,10 +83,10 @@
         return url;
       }
 
-      return `${prefixInputElement.value.replace('[url]', url)}`;
+      return prefixInputElement.value.replace('[url]', url);
     }).join('\r\n');
 
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(`${content}\r\n`);
   });
 
   // Create prefix input
