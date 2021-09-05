@@ -109,10 +109,10 @@
   function writeListContent() {
     listElement.innerHTML = urls.map((url) => {
       if (!prefixInputElement.value) {
-        return `<li class="ml-4">${url}</li>`;
+        return `<li class="ml-8">${url}</li>`;
       }
 
-      return `<li class="ml-4 text-gray-400">${prefixInputElement.value.replace('[url]', `<span class="text-gray-600">${url}</span>`)}</li>`;
+      return `<li class="ml-8 text-gray-400">${prefixInputElement.value.replace('[url]', `<span class="text-gray-600">${url}</span>`)}</li>`;
     }).join('');
   }
 
