@@ -5,63 +5,153 @@
 // @author       Monk
 // @match        https://*.journaldupirate.net/go_to*
 // @match        https://decotoday.net/*
+// @match        https://hyipstats.net/*
 // ==/UserScript==
 
-(() => {
-  class PageObject {
-    constructor(url) {
+(async () => {
+  class PageObjectFactory {
+    factory(url) {
       if (/.*journaldupirate.*/.exec(url)) {
-        this.form = document.querySelector('.content-body form');
-        this.link = document.querySelector('.content-body .alert a');
-        this.alert = document.querySelector('.content-body .alert');
+        return new JournalDuPiratePageObject();
       } else if (/.*decotoday.*/.exec(url)) {
-        this.form = document.querySelector('.page-content form');
-        this.link = document.querySelector('.page-content .alert a');
-        this.alert = document.querySelector('.page-content .alert');
+        return new DecoTodayPageObject();
+      } else if (/.*hyipstats.*/.exec(url)) {
+        return new HyipstatsPageObject();
       }
     }
   }
 
-  const page = new PageObject(window.location);
+  class JournalDuPiratePageObject {
+    constructor() {
+      this.list = document.createElement('ol');
+      this.actions = document.createElement('div');
+    }
 
-  // If form is present, it should be submitted to continue
-  if (page.form) {
-    page.form.submit();
+    async ready() {
+      document.querySelector('.content-body form')?.submit();
+      return Promise.resolve();
+    }
+
+    getUrl() {
+      return document.querySelector('.content-body .alert a')?.href;
+    }
+
+    injectElements() {
+      const anchor = document.querySelector('.content-body .alert');
+      anchor.parentElement.insertBefore(this.list, anchor);
+      anchor.parentElement.insertBefore(this.actions, this.list);
+    }
+  }
+
+  class DecoTodayPageObject {
+    constructor() {
+      this.list = document.createElement('ol');
+      this.actions = document.createElement('div');
+    }
+
+    async ready() {
+      document.querySelector('.page-content form')?.submit();
+      return Promise.resolve();
+    }
+
+    getUrl() {
+      return document.querySelector('.page-content .alert a')?.href;
+    }
+
+    injectElements() {
+      const anchor = document.querySelector('.page-content .alert');
+      anchor.parentElement.insertBefore(this.list, anchor);
+      anchor.parentElement.insertBefore(this.actions, this.list);
+    }
+  }
+
+  class HyipstatsPageObject {
+    constructor() {
+      this.list = document.createElement('ol');
+      this.actions = document.createElement('div');
+    }
+
+    async ready() {
+      if (this.getUrl()) {
+        const ad = await (new Promise((resolve) => {
+          const handler = setInterval(() => {
+            if (document.querySelector('.m-table-content')) {
+              clearInterval(handler);
+              resolve(document.querySelector('.m-table-content'));
+            }
+          }, 50);
+        }));
+
+        ad.parentElement.removeChild(ad);
+
+        return Promise.resolve();
+      }
+
+      const geetest = await (new Promise((resolve) => {
+        const handler = setInterval(() => {
+          if (document.querySelector('.geetest_holder')) {
+            clearInterval(handler);
+            resolve(document.querySelector('.geetest_holder'));
+          }
+        }, 50);
+      }));
+
+      geetest.dispatchEvent(new Event('click'));
+      document.querySelector('#get_link').submit();
+
+      await (new Promise((resolve) => {
+        const handler = setInterval(() => {
+          if (document.querySelector('.geetest_success_radar_tip_content').innerHTML === 'Succeeded') {
+            clearInterval(handler);
+            resolve();
+          }
+        }, 50);
+      }));
+    }
+
+    getUrl() {
+      return document.querySelector('.main-body .alert-white a')?.href;
+    }
+
+    injectElements() {
+      document.querySelector('.main-body').appendChild(this.list);
+      document.querySelector('.main-body').insertBefore(this.actions, this.list);
+    }
+  }
+
+  const page = (new PageObjectFactory()).factory(window.location);
+
+  if (!page) {
+    console.warn('Cannot parse this page');
+  }
+
+  await page.ready();
+
+  if (!page.getUrl()) {
+    console.warn('No link found in this page');
     return;
   }
 
-  // If no link is present, then the page is probably not a link protection page
-  if (!page.link) {
-    return;
+  const urls = [];
+  function fetchUrls() {
+    const stringifiedUrls = JSON.stringify(urls);
+    const raw = localStorage.getItem('urls');
+
+    if (stringifiedUrls !== raw) {
+      const store = JSON.parse(raw);
+
+      if (store && Array.isArray(store) && store.length) {
+        urls.splice(0, urls.length, ...store);
+        writeListContent();
+      }
+    }
   }
 
   // Install TailwindCSS
-  // <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
   const tailwindLinkElement = document.createElement('link');
   tailwindLinkElement.href = 'https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css';
   tailwindLinkElement.rel = 'stylesheet';
   document.head.appendChild(tailwindLinkElement);
-
-  const urls = [];
-
-  // Get previous urls from localStorage
-  if (localStorage.getItem('urls')) {
-    const store = JSON.parse(localStorage.getItem('urls'));
-
-    if (store && Array.isArray(store) && store.length) {
-      urls.push(...store);
-    }
-  }
-
-  // Filter duplicate urls
-  if (!urls.includes(page.link.href)) {
-    urls.push(page.link.href);
-    localStorage.setItem('urls', JSON.stringify(urls));
-  }
-
-  if (!page.alert) {
-    return;
-  }
 
   // Create reset button
   const resetButtonElement = document.createElement('div');
@@ -70,7 +160,7 @@
   resetButtonElement.addEventListener('click', () => {
     localStorage.removeItem('urls');
     writeListContent();
-    actionWrapperElement.style.display = listElement.style.display = 'none';
+    page.actions.style.display = page.list.style.display = 'none';
   });
 
   // Create copy button
@@ -78,13 +168,9 @@
   copyButtonElement.className = 'cursor-pointer rounded border border-black border-blue-600 hover:border-blue-400 p-1 text-blue-600 hover:text-blue-400';
   copyButtonElement.innerHTML = '<svg class="inline" style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" /></svg> Copy';
   copyButtonElement.addEventListener('click', () => {
-    const content = urls.map((url) => {
-      if (!prefixInputElement.value) {
-        return url;
-      }
-
-      return prefixInputElement.value.replace('[url]', url);
-    }).join('\r\n');
+    const content = prefixInputElement.value
+      ? urls.map((url) => prefixInputElement.value.replace('[url]', url)).join('\r\n')
+      : urls.join(' ');
 
     navigator.clipboard.writeText(`${content}\r\n`);
   });
@@ -99,15 +185,14 @@
     localStorage.setItem('pattern', input.target.value);
   });
 
-  // Create action wrapper element
-  const actionWrapperElement = document.createElement('div');
-  actionWrapperElement.className = 'flex space-x-1';
-  actionWrapperElement.appendChild(resetButtonElement);
-  actionWrapperElement.appendChild(copyButtonElement);
-  actionWrapperElement.appendChild(prefixInputElement);
+  // Populate action wrapper element
+  page.actions.className = 'flex space-x-1';
+  page.actions.appendChild(resetButtonElement);
+  page.actions.appendChild(copyButtonElement);
+  page.actions.appendChild(prefixInputElement);
 
   function writeListContent() {
-    listElement.innerHTML = urls.map((url) => {
+    page.list.innerHTML = urls.map((url) => {
       if (!prefixInputElement.value) {
         return `<li class="ml-8">${url}</li>`;
       }
@@ -116,11 +201,19 @@
     }).join('');
   }
 
-  // Create url list
-  const listElement = document.createElement('ol');
-  listElement.className = 'my-1 ml-2 border-l-4 border-grey-300 pl-6 select-none list-decimal';
-  writeListContent();
-  page.alert.parentElement.insertBefore(listElement, page.alert);
+  // Populate url list
+  page.list.className = 'my-1 ml-2 border-l-4 border-grey-300 pl-6 select-none list-decimal';
 
-  page.alert.parentElement.insertBefore(actionWrapperElement, listElement);
+  page.injectElements();
+
+  fetchUrls();
+
+  // Filter duplicate urls
+  if (!urls.includes(page.getUrl())) {
+    urls.push(page.getUrl());
+    localStorage.setItem('urls', JSON.stringify(urls));
+    writeListContent();
+  }
+
+  setInterval(fetchUrls, 500);
 })();
