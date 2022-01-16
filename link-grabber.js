@@ -194,6 +194,10 @@
         navigator.clipboard.writeText(this.urls.join('\r\n'));
       },
 
+      remove(url) {
+        this.urls = this.urls.filter((storedUrl) => storedUrl !== url);
+      },
+
       syncUrls() {
         const rawStoredList = localStorage.getItem('urls');
 
@@ -204,7 +208,7 @@
             this.urls = storedList;
           }
         }
-      }
+      },
     },
 
     template: `
@@ -215,8 +219,7 @@
             @click="clear"
           >
             <svg
-              class="inline"
-              style="width:24px;height:24px"
+              class="inline w-8 h-8"
               viewBox="0 0 24 24"
             >
               <path
@@ -231,8 +234,7 @@
             @click="copy"
           >
             <svg
-              class="inline"
-              style="width:24px;height:24px"
+              class="inline w-8 h-8"
               viewBox="0 0 24 24"
             >
               <path
@@ -243,16 +245,22 @@
           </button>
         </div>
 
-        <ol
+        <div
           v-if="urls.length"
-          class="my-1 ml-2 border-l-4 border-grey-300 pl-6 list-decimal"
+          class="my-1 ml-2 border-l-4 border-grey-300 pl-6 cursor-default"
         >
-          <li
+          <div
             v-for="url in urls"
-            :key="url"
-            class="ml-8"
-          >{{ url }}</li>
-        </ol>
+            class="flex justify-between px-2 rounded hover:bg-blue-100"
+          >
+            <div>{{ url }}</div>
+            <button class="cursor-pointer select-none" @click="remove(url)">
+              <svg viewBox="0 0 24 24" class="inline w-4 h-4">
+                <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     `,
   });
