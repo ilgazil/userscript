@@ -226,7 +226,7 @@
       },
 
       copy() {
-        navigator.clipboard.writeText(this.urls.join('\r\n'));
+        navigator.clipboard.writeText(this.urls.join(' '));
       },
 
       remove(url) {
