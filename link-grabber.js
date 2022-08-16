@@ -214,7 +214,7 @@
         const message = `${this.urls.length} url`;
 
         if (this.urls.length === 1) {
-          return this.urls.length;
+          return message;
         }
 
         return `${message}s`;
@@ -240,7 +240,6 @@
       },
 
       copy(event) {
-        console.log(event);
         navigator.clipboard.writeText(this.urls.join(' '));
       },
 
