@@ -6,7 +6,7 @@
 // @match        https://*.journaldupirate.net/go_to*
 // @match        https://decotoday.net/*
 // @match        https://hyipstats.net/*
-// @match        https://dl-protect.info/*
+// @match        https://dl-protect.net/*
 // ==/UserScript==
 
 (async () => {
@@ -134,7 +134,17 @@
         return Promise.resolve();
       }
 
-      setTimeout(() => document.querySelector('form#myForm button.g-recaptcha').click(), 2000);
+      return new Promise((resolve) => {
+        const handle = setInterval(() => {
+          if (document.getElementById('subButton')?.innerText === 'Continuer') {
+            setTimeout(() => {
+              document.getElementById('subButton').click();
+              clearInterval(handle);
+              resolve();
+            });
+          }
+        }, 100);
+      });
     }
 
     getUrl() {
