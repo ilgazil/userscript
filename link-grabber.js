@@ -7,6 +7,8 @@
 // @match        https://decotoday.net/*
 // @match        https://hyipstats.net/*
 // @match        https://dl-protect.net/*
+// @match        https://dl-protect.link/*
+// @match        https://www7.sumoweb.to/open_link/*
 // ==/UserScript==
 
 (async () => {
@@ -33,6 +35,8 @@
         return new HyipstatsPageObject();
       } else if (/.*dl-protect.*/.exec(url)) {
         return new DlProtectPageObject();
+      } else if (/.*sumoweb.*/.exec(url)) {
+        return new SumowebPageObject();
       }
     }
   }
@@ -141,7 +145,7 @@
               document.getElementById('subButton').click();
               clearInterval(handle);
               resolve();
-            });
+            }, 100);
           }
         }, 100);
       });
@@ -160,6 +164,41 @@
 
       rowElement.appendChild(appAnchor);
       document.querySelector('.urls').parentNode.parentNode.appendChild(rowElement);
+
+      return '#app';
+    }
+  }
+
+  class SumowebPageObject {
+    constructor() {
+      this.list = document.createElement('ol');
+      this.actions = document.createElement('div');
+    }
+
+    async ready() {
+      return new Promise((resolve, reject) => {
+        const handle = setInterval(() => {
+          if (document.querySelector('.geetest_radar_success')) {
+            document.querySelector('form#get_link').submit();
+            clearInterval(handle);
+            reject();
+          } else if (this.getUrl()) {
+            clearInterval(handle);
+            resolve();
+          }
+        }, 200);
+      });
+    }
+
+    getUrl() {
+      return document.querySelector('.alert-notice + h3 a')?.href;
+    }
+
+    async getAppAnchor() {
+      const appAnchor = document.createElement('div');
+      appAnchor.id = 'app';
+
+      document.querySelector('.alert-notice + h3').parentElement.appendChild(appAnchor);
 
       return '#app';
     }
