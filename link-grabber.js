@@ -178,12 +178,13 @@
     async ready() {
       return new Promise((resolve, reject) => {
         const handle = setInterval(() => {
-          if (document.querySelector('.geetest_radar_success')) {
+          if (document.querySelector('.geetest_radar_success') || document.querySelector('#captcha')) {
             document.querySelector('form#get_link').submit();
             clearInterval(handle);
             reject();
           } else if (this.getUrl()) {
             clearInterval(handle);
+            this.clearAds();
             resolve();
           }
         }, 200);
@@ -191,14 +192,23 @@
     }
 
     getUrl() {
-      return document.querySelector('.alert-notice + h3 a')?.href;
+      return document.querySelector('#content .alert.alert-info a')?.href;
+    }
+
+    clearAds() {
+      Array.from(document.querySelectorAll('#content > *'))
+        .forEach((element) => {
+          if (!element.firstElementChild.classList.contains('alert')) {
+            element.parentElement.removeChild(element);
+          }
+        });
     }
 
     async getAppAnchor() {
       const appAnchor = document.createElement('div');
       appAnchor.id = 'app';
 
-      document.querySelector('.alert-notice + h3').parentElement.appendChild(appAnchor);
+      document.querySelector('#content .alert.alert-info').parentElement.appendChild(appAnchor);
 
       return '#app';
     }
