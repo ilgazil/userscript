@@ -179,8 +179,9 @@
       return new Promise((resolve, reject) => {
         const handle = setInterval(() => {
           if (document.querySelector('.geetest_radar_success') || document.querySelector('#captcha')) {
-            document.querySelector('form#get_link').submit();
-            clearInterval(handle);
+            this.clearAds();
+            // document.querySelector('form#get_link').submit();
+            // clearInterval(handle);
             reject();
           } else if (this.getUrl()) {
             clearInterval(handle);
@@ -196,10 +197,23 @@
     }
 
     clearAds() {
-      Array.from(document.querySelectorAll('#content > *'))
+      const style = document.createElement('style');
+      style.innerHTML = [
+        'header',
+        '#sidebar',
+        'footer',
+        'body div.fc-consent-root',
+      ]
+        .join(', ')
+        .concat(' {display: none !important}');
+
+      document.querySelector('head').appendChild(style);
+
+      Array
+        .from(document.querySelectorAll('#content > *'))
         .forEach((element) => {
-          if (!element.firstElementChild.classList.contains('alert')) {
-            element.parentElement.removeChild(element);
+          if (!element.querySelector('#captcha') && !element.querySelector('.alert')) {
+            element.style.display = 'none';
           }
         });
     }
