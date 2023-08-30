@@ -8,7 +8,7 @@
 // @match        https://hyipstats.net/*
 // @match        https://dl-protect.net/*
 // @match        https://dl-protect.link/*
-// @match        https://www7.sumoweb.to/open_link/*
+// @match        https://www7.sumoweb.to/*
 // ==/UserScript==
 
 (async () => {
@@ -175,13 +175,12 @@
       this.actions = document.createElement('div');
     }
 
-    async ready() {
+    async ready () {
       return new Promise((resolve, reject) => {
         const handle = setInterval(() => {
-          if (document.querySelector('.geetest_radar_success') || document.querySelector('#captcha')) {
+          if (document.querySelector('#captcha')) {
+            clearInterval(handle);
             this.clearAds();
-            // document.querySelector('form#get_link').submit();
-            // clearInterval(handle);
             reject();
           } else if (this.getUrl()) {
             clearInterval(handle);
@@ -193,27 +192,14 @@
     }
 
     getUrl() {
-      return document.querySelector('#content .alert.alert-info a')?.href;
+      return document.querySelector('a[href*=uptobox]')?.href;
     }
 
     clearAds() {
-      const style = document.createElement('style');
-      style.innerHTML = [
-        'header',
-        '#sidebar',
-        'footer',
-        'body div.fc-consent-root',
-      ]
-        .join(', ')
-        .concat(' {display: none !important}');
-
-      document.querySelector('head').appendChild(style);
-
-      Array
-        .from(document.querySelectorAll('#content > *'))
+      Array.from(document.querySelectorAll('header, .page-breadcrumb, #content > *:not(.post-content), .post-content > *, .post-content > .post-text > *, #sidebar, footer, .scrollup'))
         .forEach((element) => {
-          if (!element.querySelector('#captcha') && !element.querySelector('.alert')) {
-            element.style.display = 'none';
+          if (!element.querySelector('#get_link') && !element.querySelector('a[href*=uptobox]')) {
+            element.parentElement.removeChild(element);
           }
         });
     }
@@ -222,7 +208,7 @@
       const appAnchor = document.createElement('div');
       appAnchor.id = 'app';
 
-      document.querySelector('#content .alert.alert-info').parentElement.appendChild(appAnchor);
+      document.querySelector('a[href*=uptobox]').parentElement.parentElement.appendChild(appAnchor);
 
       return '#app';
     }
