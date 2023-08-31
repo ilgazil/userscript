@@ -196,7 +196,17 @@
     }
 
     clearAds() {
-      Array.from(document.querySelectorAll('header, .page-breadcrumb, #content > *:not(.post-content), .post-content > *, .post-content > .post-text > *, #sidebar, footer, .scrollup'))
+      Array.from(document.querySelectorAll([
+        'header',
+        '.page-breadcrumb',
+        '#content > *:not(.post-content)',
+        '.post-content > *',
+        '.post-content > .post-text > *',
+        '.post-content > .post-text > .content > *',
+        '#sidebar',
+        'footer',
+        '.scrollup',
+      ].join(', ')))
         .forEach((element) => {
           if (!element.querySelector('#get_link') && !element.querySelector('a[href*=uptobox]')) {
             element.parentElement.removeChild(element);
