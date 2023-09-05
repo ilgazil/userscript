@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Filter Darkino file versions
 // @author       Ilgazil
-// @match        https://www2.darkino.io/
+// @match        https://www2.darkino.io/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=darkino.io
 // @grant        none
 // ==/UserScript==
