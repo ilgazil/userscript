@@ -5,6 +5,7 @@
 // @description  Filter Darkino file versions
 // @author       Ilgazil
 // @match        https://www2.darkino.io/*
+// @match        https://www2.darkino.online/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=darkino.io
 // @grant        none
 // ==/UserScript==
@@ -30,4 +31,12 @@
       badge.addEventListener('click', ({target}) => filter(target));
       badge.style.cursor = 'pointer';
     });
+
+  const observer = new MutationObserver(
+    () => Array
+      .from(document.querySelectorAll('html > *:not(body, head)'))
+      .forEach((element) => element.parentElement.removeChild(element)),
+  );
+
+  observer.observe(document.querySelector('html'), {childList: true});
 })();
