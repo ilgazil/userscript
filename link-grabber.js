@@ -9,6 +9,7 @@
 // @match        https://dl-protect.net/*
 // @match        https://dl-protect.link/*
 // @match        https://www7.sumoweb.to/*
+// @match        https://download.sumoweb.to/*
 // ==/UserScript==
 
 (async () => {
@@ -293,10 +294,11 @@
     mounted() {
       this.syncUrls();
       setInterval(() => this.syncUrls(), 500);
+        const url = /(?<url>.*)&/.exec(page.getUrl()).groups.url;
 
-      if (page.getUrl()) {
-        if (!this.urls.includes(page.getUrl())) {
-          this.urls = [...this.urls, page.getUrl()];
+      if (url) {
+        if (!this.urls.includes(url)) {
+          this.urls = [...this.urls, url];
         }
       } else {
         console.warn('No link found in this page');
@@ -337,7 +339,7 @@
             @click="clear"
           >
             <svg
-              class="inline w-8 h-8"
+              class="inline w-4 h-4"
               viewBox="0 0 24 24"
             >
               <path
@@ -352,7 +354,7 @@
             @click="copy"
           >
             <svg
-              class="inline w-8 h-8"
+              class="inline w-4 h-4"
               viewBox="0 0 24 24"
             >
               <path
@@ -367,7 +369,7 @@
 
         <ol
           v-if="urls.length"
-          class="my-1 ml-2 border-l-4 border-grey-300 pl-6 cursor-default"
+          class="my-1 ml-2 border-l-4 border-grey-300 cursor-default"
         >
           <li
             v-for="url in urls"
