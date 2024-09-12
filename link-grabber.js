@@ -25,6 +25,7 @@
   }
 
   async function resolveCaptcha() {
+    return Promise.resolve();
     return new Promise((resolve) => {
       const handle = setInterval(() => {
         if (document.querySelector('[name=cf-turnstile-response]')?.value) {
@@ -64,8 +65,10 @@
   }
 
   async function getStore({onChange}) {
+    const storedList = JSON.parse(localStorage.getItem('urls') || '');
+
     const store = {
-      urls: [],
+      urls: storedList && Array.isArray(storedList) ? storedList : [],
 
       add(url) {
         if (this.urls.includes(url)) {
@@ -90,7 +93,7 @@
       },
 
       save() {
-        localStorage.setItem('urls', JSON.stringify(urls));
+        localStorage.setItem('urls', JSON.stringify(this.urls));
       },
 
       sync() {
@@ -102,7 +105,7 @@
             const storedList = JSON.parse(rawStoredList);
 
             if (storedList && Array.isArray(storedList) && storedList.length) {
-              this.urls = storedList;
+              this.urls = storedList.concat(this.urls).filter((url, index) => storedList.indexOf(url) === index);
               onChange(this);
             }
           }
@@ -172,18 +175,18 @@
   }
 
   async function addEventListeners(anchor, store) {
-    anchor.addEventListener('click', (element) => {
-      switch (true) {
-        case element.id === 'clear':
-          store.urls = [];
-          break;
-        case element.id === 'copy':
-          navigator.clipboard.writeText(store.urls.join(' '));
-          break;
-        case element.classList.contains('url'):
-          store.urls = this.urls.filter((storedUrl) => storedUrl !== element.getAttribute('data-url'));
-          break;
-      }
+    anchor
+      .querySelector('#clear')
+      .addEventListener('click', (element) => (store.urls = []));
+
+    anchor
+      .querySelector('#copy')
+      .addEventListener('click', (element) => (navigator.clipboard.writeText(store.urls.join(' '))));
+
+    anchor
+      .querySelector('#list')
+      .addEventListener('click', (element) => {
+        // @todo case element.classList.contains('url'): store.urls = this.urls.filter((storedUrl) => storedUrl !== element.getAttribute('data-url'));
     });
 
     return Promise.resolve();
@@ -226,9 +229,11 @@
   } else {
     const anchor = await getAnchor();
 
-    const store = await getStore(async (store) => {
-      await writeUrls(anchor, store);
-      await writeSummary(anchor, store);
+    const store = await getStore({
+      onChange: async (store) => {
+        await writeUrls(anchor, store);
+        await writeSummary(anchor, store);
+      },
     });
 
     store.add(await getNewUrl());
