@@ -20,44 +20,29 @@
     });
   }
 
+  async function getCaptchaValidator() {
+    return document.querySelector('#subButton');
+  }
+
   async function isCaptchaPage() {
-    return Promise.resolve(!!document.querySelector('form#myForm'));
+    return Promise.resolve(!!(await getCaptchaValidator()));
   }
 
   async function resolveCaptcha() {
-    return Promise.resolve();
     return new Promise((resolve) => {
-      const handle = setInterval(() => {
-        if (document.querySelector('[name=cf-turnstile-response]')?.value) {
+      const handle = setInterval(async () => {
+        const button = await getCaptchaValidator();
+
+        if (button.innerText === 'Continuer') {
+          resolve();
           setTimeout(() => {
-            document.getElementById('subButton').click();
+            button.click();
             clearInterval(handle);
             resolve();
           }, 100);
         }
-      }, 100);
+      }, 500);
     });
-  }
-
-  async function clearAdds() {
-    // Array.from(document.querySelectorAll([
-    //   'header',
-    //   '.page-breadcrumb',
-    //   '#content > *:not(.post-content)',
-    //   '.post-content > *',
-    //   '.post-content > .post-text > *',
-    //   '.post-content > .post-text > .content > *',
-    //   '#sidebar',
-    //   'footer',
-    //   '.scrollup',
-    // ].join(', ')))
-    //   .forEach((element) => {
-    //     if (!element.querySelector('#get_link') && !element.querySelector('a[href*=uptobox]')) {
-    //       element.parentElement.removeChild(element);
-    //     }
-    //   });
-
-    return Promise.resolve();
   }
 
   async function getNewUrl() {
@@ -129,11 +114,11 @@
     document.querySelector('.urls').parentNode.parentNode.appendChild(layoutRow);
 
     anchor.innerHTML = `
-      <div>
+      <div id="app">
         <div style="display: flex; align-items: center; justify-content: center; gap: 0.25em">
           <button
             id="clear"
-            style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(220 38 38); color: rgb(220 38 38); user-select: none"
+            style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(220 38 38); color: rgb(220 38 38); background-color: transparent; user-select: none"
           >
             <svg
               style="display: inline; width: 1em; height: 1em"
@@ -148,7 +133,7 @@
 
           <button
             id="copy"
-            style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(37 99 235); color: rgb(37 99 235); user-select: none"
+            style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(37 99 235); color: rgb(37 99 235); background-color: transparent; user-select: none"
           >
             <svg
               style="display: inline; width: 1em; height: 1em"
@@ -176,18 +161,29 @@
 
   async function addEventListeners(anchor, store) {
     anchor
+      .querySelector('#app')
+      .addEventListener('click', (event) => event.stopPropagation());
+
+    anchor
       .querySelector('#clear')
-      .addEventListener('click', (element) => (store.urls = []));
+      .addEventListener('click', () => store.clear());
 
     anchor
       .querySelector('#copy')
-      .addEventListener('click', (element) => (navigator.clipboard.writeText(store.urls.join(' '))));
+      .addEventListener('click', () => navigator.clipboard.writeText(store.urls.join(' ')));
 
     anchor
       .querySelector('#list')
-      .addEventListener('click', (element) => {
-        // @todo case element.classList.contains('url'): store.urls = this.urls.filter((storedUrl) => storedUrl !== element.getAttribute('data-url'));
-    });
+      .addEventListener('click', (event) => {
+        const button = Array
+          .from(anchor.querySelector('#list').children)
+          .map((element) => element.querySelector('button'))
+          .find((button) => button === event.target || button.contains(event.target));
+
+        if (button) {
+          store.remove(button.previousElementSibling.innerText);
+        }
+      });
 
     return Promise.resolve();
   }
@@ -198,7 +194,10 @@
         style="display: flex; justify-content: space-between; padding: 0.25em 0; border-radius: 0.25em;"
       >
         <div>${url}</div>
-        <button style="cursor: pointer; user-select: none" class="link">
+        <button
+          style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(220 38 38); color: rgb(220 38 38); background-color: transparent; user-select: none"
+          class="link"
+        >
           <svg viewBox="0 0 24 24" style="display: inline; width: 1.5em; height: 1.5em">
             <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path>
           </svg>
@@ -224,7 +223,43 @@
     return Promise.resolve();
   }
 
+  async function createAddSentry() {
+    const observer = new MutationObserver((mutationList, observer) => {
+      Object
+        .values(mutationList)
+        .forEach((mutation) => {
+          if (mutation.type === "childList") {
+            void clearBody();
+          }
+        });
+    });
+
+    observer.observe(document.body, {childList: true, subtree: true});
+
+    void clearBody();
+
+    return Promise.resolve(true);
+  }
+
+  let BODY_CLEAR_THROTTLE = 0;
+  async function clearBody() {
+    if (BODY_CLEAR_THROTTLE) {
+      clearTimeout(BODY_CLEAR_THROTTLE);
+    }
+
+    BODY_CLEAR_THROTTLE = setTimeout(() => {
+      const elements = Array.from(document.body.children);
+      const footerElementIndex = elements.findIndex((element) => element.tagName === 'FOOTER');
+
+      elements
+        .filter((element, index) => (index < footerElementIndex && element.tagName !== 'DIV') || (index > footerElementIndex))
+        .forEach((element) => element.parentNode.removeChild(element));
+    }, 100);
+  }
+
   if (await isCaptchaPage()) {
+    await createAddSentry();
+
     await resolveCaptcha();
   } else {
     const anchor = await getAnchor();
@@ -236,8 +271,12 @@
       },
     });
 
+    await writeUrls(anchor, store);
+
     store.add(await getNewUrl());
 
     await addEventListeners(anchor, store);
+
+    await createAddSentry();
   }
 })();
