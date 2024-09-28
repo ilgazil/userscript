@@ -50,10 +50,18 @@
   }
 
   async function getStore({onChange}) {
-    const storedList = JSON.parse(localStorage.getItem('urls') || '');
+    function parseSavedList(raw) {
+      let savedList = JSON.parse(raw) || [];
+
+      if (!savedList || !Array.isArray(savedList)) {
+        savedList = [];
+      }
+
+      return savedList;
+    }
 
     const store = {
-      urls: storedList && Array.isArray(storedList) ? storedList : [],
+      urls: parseSavedList(localStorage.getItem('urls')),
 
       add(url) {
         if (this.urls.includes(url)) {
@@ -61,16 +69,23 @@
         }
 
         this.urls.push(url);
+        this.save();
         onChange(this);
       },
 
       remove(url) {
-        this.urls = this.urls.filter((storedUrl) => storedUrl !== url);
+        if (!this.urls.includes(url)) {
+          return;
+        }
+
+        this.urls = this.urls.filter((savedUrl) => savedUrl !== url);
+        this.save();
         onChange(this);
       },
 
       clear() {
         this.urls = [];
+        this.save();
         onChange(this);
       },
 
@@ -79,20 +94,14 @@
       },
 
       sync() {
-        setInterval(() => {
-          const storedList = JSON.parse(localStorage.getItem('urls'));
-
-          if (storedList && Array.isArray(storedList) && storedList.length) {
-            if (storedList.sort().join(';') === this.urls.sort().join(';')) {
-              return;
-            }
-
-            const urls = storedList.concat(this.urls);
-            this.urls = urls.filter((url, index) => urls.indexOf(url) === index);
-            this.save();
-            onChange(this);
+        window.addEventListener('storage', (event) => {
+          if (event.key !== 'urls') {
+            return;
           }
-        }, 100);
+
+          this.urls = parseSavedList(event.newValue);
+          onChange(this);
+        });
       },
     }
 
