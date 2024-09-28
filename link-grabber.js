@@ -62,19 +62,16 @@
 
         this.urls.push(url);
         onChange(this);
-        this.save();
       },
 
       remove(url) {
         this.urls = this.urls.filter((storedUrl) => storedUrl !== url);
         onChange(this);
-        this.save();
       },
 
       clear() {
         this.urls = [];
         onChange(this);
-        this.save();
       },
 
       save() {
@@ -83,16 +80,17 @@
 
       sync() {
         setInterval(() => {
-          const rawList = JSON.stringify(this.urls);
-          const rawStoredList = localStorage.getItem('urls');
+          const storedList = JSON.parse(localStorage.getItem('urls'));
 
-          if (rawList !== rawStoredList) {
-            const storedList = JSON.parse(rawStoredList);
-
-            if (storedList && Array.isArray(storedList) && storedList.length) {
-              this.urls = storedList.concat(this.urls).filter((url, index) => storedList.indexOf(url) === index);
-              onChange(this);
+          if (storedList && Array.isArray(storedList) && storedList.length) {
+            if (storedList.sort().join(';') === this.urls.sort().join(';')) {
+              return;
             }
+
+            const urls = storedList.concat(this.urls);
+            this.urls = urls.filter((url, index) => urls.indexOf(url) === index);
+            this.save();
+            onChange(this);
           }
         }, 100);
       },
@@ -272,6 +270,7 @@
     });
 
     await writeUrls(anchor, store);
+    await writeSummary(anchor, store);
 
     store.add(await getNewUrl());
 
