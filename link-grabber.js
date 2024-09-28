@@ -196,11 +196,13 @@
   }
 
   async function writeUrls(anchor, store) {
+    const newUrl = await getNewUrl();
+
     anchor.querySelector('#list').innerHTML = store.urls.map((url) => `
       <li
         style="display: flex; justify-content: space-between; padding: 0.25em 0; border-radius: 0.25em;"
       >
-        <div>${url}</div>
+        <div style="${newUrl === url ? 'font-weight: bold' : ''}">${url}</div>
         <button
           style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(220 38 38); color: rgb(220 38 38); background-color: transparent; user-select: none"
           class="link"
