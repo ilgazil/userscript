@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         link-grabber
 // @version      3.0
-// @description  Grab links from DarkiWorld
+// @description  Grab links from url protectors
 // @author       Monk
 // @match        https://darkiworld.biz/download/*
 // ==/UserScript==
@@ -122,7 +122,9 @@
   }
 
   async function addEventListeners(anchor, store) {
-    anchor.addEventListener('click', (element) => {
+    anchor.addEventListener('click', (event) => {
+      const element = event.target;
+
       switch (true) {
         case element.id === 'clear':
           store.urls = [];
