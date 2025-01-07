@@ -123,18 +123,29 @@
 
   async function addEventListeners(anchor, store) {
     anchor.addEventListener('click', (event) => {
-      const element = event.target;
+      const {target} = event;
 
-      switch (true) {
-        case element.id === 'clear':
-          store.urls = [];
-          break;
-        case element.id === 'copy':
-          navigator.clipboard.writeText(store.urls.join(' '));
-          break;
-        case element.classList.contains('url'):
-          store.urls = this.urls.filter((storedUrl) => storedUrl !== element.getAttribute('data-url'));
-          break;
+      const clearButton = anchor.querySelector('#clear');
+
+      if (clearButton === target || clearButton.contains(target)) {
+        store.urls = [];
+        store.save();
+        return;
+      }
+
+      const copyButton = anchor.querySelector('#copy');
+
+      if (clearButton === target || clearButton.contains(target)) {
+        navigator.clipboard.writeText(store.urls.join(' '));
+        return;
+      }
+
+      const linkButton = Array.from(anchor.querySelectorAll('.link')).find((button) => button === target || button.contains(target));
+
+      if (linkButton) {
+        store.urls = store.urls.filter((storedUrl) => storedUrl !== linkButton.getAttribute('data-url'));
+        store.save();
+        return;
       }
     });
 
@@ -147,7 +158,7 @@
         style="display: flex; justify-content: space-between; padding: 0.25em 0; border-radius: 0.25em;"
       >
         <div>${url}</div>
-        <button style="cursor: pointer; display: flex" class="link">
+        <button style="cursor: pointer; display: flex" class="link" data-url="${url}">
           <svg viewBox="0 0 24 24" style="width: 1em; height: 1em">
             <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path>
           </svg>
