@@ -7,6 +7,8 @@
 // ==/UserScript==
 
 (async () => {
+  const API_KEY = '';
+
   async function getUrlButton() {
     return document.querySelector('iframe')?.contentDocument?.querySelector('a[href*="1fichier"]');
   }
@@ -78,7 +80,7 @@
     anchor.innerHTML = `
       <div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 0.25em">
-          <button
+          <div
             id="clear"
             style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(220 38 38); color: rgb(220 38 38); user-select: none; display: flex; align-items: center; padding: 2px 5px;"
           >
@@ -91,10 +93,10 @@
                 d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
               />
             </svg> Clear
-          </button>
+          </div>
 
-          <button
-            id="copy"
+          <div
+            id="debrid"
             style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(37 99 235); color: rgb(37 99 235); user-select: none; display: flex; align-items: center; padding: 2px 5px;"
           >
             <svg
@@ -105,8 +107,8 @@
                 fill="currentColor"
                 d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"
               />
-            </svg> Copy
-          </button>
+            </svg> Débrider
+          </div>
 
           <span id="summary"></span>
         </div>
@@ -133,10 +135,19 @@
         return;
       }
 
-      const copyButton = anchor.querySelector('#copy');
+      const debridButton = anchor.querySelector('#debrid');
 
-      if (clearButton === target || clearButton.contains(target)) {
-        navigator.clipboard.writeText(store.urls.join(' '));
+      if (debridButton === target || debridButton.contains(target)) {
+        const data = new FormData();
+        data.append('api_key', API_KEY);
+        store.urls.forEach((url) => data.append('url[]', url));
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.vivien.cloud/1fichier.php', true);
+        xhr.onload = function () {
+          navigator.clipboard.writeText(Object.values(JSON.parse(this.responseText)).join('\n'));
+        };
+        xhr.send(data);
         return;
       }
 
