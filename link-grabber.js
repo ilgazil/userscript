@@ -10,7 +10,7 @@
   const API_KEY = '';
 
   async function getUrlButton() {
-    return document.querySelector('iframe')?.contentDocument?.querySelector('a[href*="1fichier"]');
+    return document.querySelector('iframe#iframe-livewire')?.contentDocument?.querySelector('a[href*="1fichier"]');
   }
 
   async function getStore({onChange}) {
@@ -23,7 +23,6 @@
         }
 
         this.urls.push(url);
-        onChange(this);
         this.save();
       },
 
@@ -35,12 +34,12 @@
 
       clear() {
         this.urls = [];
-        onChange(this);
         this.save();
       },
 
       save() {
         localStorage.setItem('urls', JSON.stringify(this.urls));
+        onChange(this);
       },
 
       load() {
