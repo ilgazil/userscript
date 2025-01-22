@@ -3,14 +3,14 @@
 // @version      3.0
 // @description  Grab links from url protectors
 // @author       Monk
-// @match        https://darkiworld.biz/download/*
+// @match        https://darkiworld1.com/download/*
 // ==/UserScript==
 
 (async () => {
   const API_KEY = '';
 
   async function getUrlButton() {
-    return document.querySelector('iframe#iframe-livewire')?.contentDocument?.querySelector('a[href*="1fichier"]');
+    return document.querySelector('a[href*="1fichier"]');
   }
 
   async function getStore({onChange}) {
@@ -114,7 +114,7 @@
 
         <ol
           id="list"
-          style="margin: 0.25em 0 0.25em 0.5em; border-left: 4px solid rgb(209 213 219); cursor: default"
+          style="margin: 0.25em 0 0.25em 0.5em; border-left: 4px solid rgb(209 213 219); cursor: default; padding-left: 1em"
         ></ol>
       </div>
     `;
@@ -225,3 +225,4 @@
 
   onNewUrl(registerUrl);
 })();
+
