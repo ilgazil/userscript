@@ -3,14 +3,85 @@
 // @version      3.0
 // @description  Grab links from url protectors
 // @author       Monk
-// @match        https://darkiworld1.com/download/*
+// @match        https://darki.zone/*
+// @match        https://darkiworld2025.com/*
 // ==/UserScript==
 
 (async () => {
   const API_KEY = '';
 
+  if (window.location.host.startsWith('darkiworld2025')) {
+    let autoClose = false;
+
+    function getTableElement() {
+      return document.querySelector('tbody');
+    }
+
+    function attachEvents() {
+      Array
+        .from(getTableElement().querySelectorAll('button:not([data-attached-event])'))
+        .filter((button) => button.firstElementChild?.alt?.startsWith('1fichier'))
+        .forEach((button) => {
+          button.setAttribute('data-attached-event', '');
+
+          button.addEventListener('click', (event) => {
+            autoClose = !event.ctrlKey;
+            event.target.closest('tr').style.backgroundColor = 'orange'
+          });
+        });
+    }
+
+    function observeTable() {
+      const observer = new MutationObserver((mutations) => {
+        mutations
+          .filter((mutation) => mutation.type === 'childList')
+          .forEach(attachEvents);
+      });
+
+      observer.observe(getTableElement(), {childList: true, subtree: true});
+    }
+
+    const readyObserver = new MutationObserver((mutations) => {
+      if (mutations.find((mutation) => mutation.type === 'childList')) {
+        if (getTableElement()) {
+          attachEvents();
+          observeTable();
+
+          readyObserver.disconnect();
+        }
+      }
+    });
+
+    readyObserver.observe(document.body, {childList: true, subtree: true});
+
+    const modalObserver = new MutationObserver((mutations) => {
+      if (mutations.find((mutation) => mutation.type === 'childList')) {
+        const link = document.querySelector('a[href*="darki.zone"]');
+
+        if (!link) {
+          return;
+        }
+
+        if (autoClose) {
+          link.href = link.href.concat('&auto-close');
+        }
+
+        link.click();
+        link.closest('.z-modal').querySelector('.backdrop-blur-sm').click();
+      }
+    });
+
+    modalObserver.observe(document.body, {childList: true, subtree: true});
+
+    return;
+  }
+
+  async function getSubmitButton() {
+    return document.querySelector('main header + div button');
+  }
+
   async function getUrlButton() {
-    return document.querySelector('a[href*="1fichier"]');
+    return document.querySelector('main header + div a');
   }
 
   async function getStore({onChange}) {
@@ -68,13 +139,13 @@
     const urlButton = await getUrlButton();
 
     const layoutRow = urlButton.getRootNode().createElement('div');
-    layoutRow.className = 'row';
+    layoutRow.style = 'margin-top: 1rem;';
 
     const anchor = urlButton.getRootNode().createElement('div');
     anchor.id = 'app';
 
     layoutRow.appendChild(anchor);
-    urlButton.parentNode.appendChild(layoutRow);
+    urlButton.parentNode.after(layoutRow);
 
     anchor.innerHTML = `
       <div>
@@ -95,7 +166,7 @@
           </div>
 
           <div
-            id="debrid"
+            id="copy"
             style="cursor: pointer; border-radius: 0.25em; border: 1px solid rgb(37 99 235); color: rgb(37 99 235); user-select: none; display: flex; align-items: center; padding: 2px 5px;"
           >
             <svg
@@ -106,7 +177,7 @@
                 fill="currentColor"
                 d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"
               />
-            </svg> Débrider
+            </svg> Copier
           </div>
 
           <span id="summary"></span>
@@ -134,19 +205,10 @@
         return;
       }
 
-      const debridButton = anchor.querySelector('#debrid');
+      const copyButton = anchor.querySelector('#copy');
 
-      if (debridButton === target || debridButton.contains(target)) {
-        const data = new FormData();
-        data.append('api_key', API_KEY);
-        store.urls.forEach((url) => data.append('url[]', url));
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.vivien.cloud/1fichier.php', true);
-        xhr.onload = function () {
-          navigator.clipboard.writeText(Object.values(JSON.parse(this.responseText)).join('\n'));
-        };
-        xhr.send(data);
+      if (copyButton === target || copyButton.contains(target)) {
+        navigator.clipboard.writeText(store.urls.map((url) => `https://api.vivien.cloud/1fichier.php?api_key=${API_KEY}&url=${url}`).join('\n'));
         return;
       }
 
@@ -206,23 +268,40 @@
     });
 
     store.add(url);
+
+    return store;
+  }
+
+  function autoSubmit() {
+    const handler = setInterval(async () => {
+      const button = await getSubmitButton();
+
+      if (button) {
+        button.click();
+        clearInterval(handler);
+      };
+    }, 100);
   }
 
   function onNewUrl(handler) {
-    let currentUrl;
-
-    setInterval(async () => {
+    const handle = setInterval(async () => {
       const url = String((await getUrlButton())?.href || '');
 
-      if (currentUrl === url) {
+      if (!url) {
         return;
       }
 
-      currentUrl = url;
-      currentUrl && handler(currentUrl);
-    }, 1000);
+      handler(url);
+      clearInterval(handle);
+    }, 100);
   }
 
-  onNewUrl(registerUrl);
-})();
+  onNewUrl(async (url) => {
+    const store = await registerUrl(url);
 
+    if (new URLSearchParams(window.location.search).has('auto-close')) {
+      window.close();
+    }
+  });
+  autoSubmit();
+})();
