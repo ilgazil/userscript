@@ -12,6 +12,7 @@
 
   if (window.location.host.startsWith('darkiworld2025')) {
     let autoClose = false;
+    let collected = false;
 
     function attachLinks() {
       const tableElement = document.querySelector('tbody');
@@ -27,6 +28,7 @@
           button.setAttribute('data-attached-event', '');
 
           button.addEventListener('click', (event) => {
+            collected = false;
             autoClose = !event.ctrlKey;
             event.target.closest('tr').style.backgroundColor = 'orange'
           });
@@ -46,12 +48,49 @@
 
       link.click();
       link.closest('.z-modal').querySelector('.backdrop-blur-sm').click();
+
+      collected = true;
+    }
+
+    function createCollectAll() {
+      if (document.querySelector('#auto-collector')) {
+        return;
+      }
+
+      const reference = document.querySelector('.hidden-scrollbar button');
+
+      if (!reference) {
+        return;
+      }
+
+      const button = new DOMParser().parseFromString(reference.outerHTML, 'text/html').body.firstElementChild;
+      button.id = 'auto-collector';
+      button.firstElementChild.outerHTML = document.querySelector('[data-testid="ArchiveOutlinedIcon"').outerHTML;
+      button.firstElementChild.classList.remove('text-muted');
+      button.firstElementChild.nextSibling.nodeValue = 'Tout télécharger';
+
+      button.addEventListener('click', collectAll);
+
+      reference.after(button);
+    }
+
+    async function collectAll() {
+      const buttons = Array
+        .from(document.querySelectorAll('[data-attached-event]'))
+        .filter((button) => String(Number(button.closest('tr').firstElementChild.innerText)) === button.closest('tr').firstElementChild.innerText);
+
+      while (buttons.length) {
+        buttons.shift().click();
+
+        await new Promise((resolve) => setInterval(() => collected && resolve(), 100));
+      }
     }
 
     const linkObserver = new MutationObserver((mutations) => {
       if (mutations.find((mutation) => mutation.type === 'childList')) {
         attachLinks();
         autoOpenLink();
+        createCollectAll();
       }
     });
 
