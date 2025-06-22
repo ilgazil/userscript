@@ -13,13 +13,15 @@
   if (window.location.host.startsWith('darkiworld2025')) {
     let autoClose = false;
 
-    function getTableElement() {
-      return document.querySelector('tbody');
-    }
+    function attachLinks() {
+      const tableElement = document.querySelector('tbody');
 
-    function attachEvents() {
+      if (!tableElement) {
+        return;
+      }
+
       Array
-        .from(getTableElement().querySelectorAll('button:not([data-attached-event])'))
+        .from(tableElement.querySelectorAll('button:not([data-attached-event])'))
         .filter((button) => button.firstElementChild?.alt?.startsWith('1fichier'))
         .forEach((button) => {
           button.setAttribute('data-attached-event', '');
@@ -28,50 +30,32 @@
             autoClose = !event.ctrlKey;
             event.target.closest('tr').style.backgroundColor = 'orange'
           });
-        });
-    }
-
-    function observeTable() {
-      const observer = new MutationObserver((mutations) => {
-        mutations
-          .filter((mutation) => mutation.type === 'childList')
-          .forEach(attachEvents);
       });
-
-      observer.observe(getTableElement(), {childList: true, subtree: true});
     }
 
-    const readyObserver = new MutationObserver((mutations) => {
-      if (mutations.find((mutation) => mutation.type === 'childList')) {
-        if (getTableElement()) {
-          attachEvents();
-          observeTable();
+    function autoOpenLink() {
+      const link = document.querySelector('a[href*="darki.zone"]');
 
-          readyObserver.disconnect();
-        }
+      if (!link) {
+        return;
+      }
+
+      if (autoClose) {
+        link.href = link.href.concat('&auto-close');
+      }
+
+      link.click();
+      link.closest('.z-modal').querySelector('.backdrop-blur-sm').click();
+    }
+
+    const linkObserver = new MutationObserver((mutations) => {
+      if (mutations.find((mutation) => mutation.type === 'childList')) {
+        attachLinks();
+        autoOpenLink();
       }
     });
 
-    readyObserver.observe(document.body, {childList: true, subtree: true});
-
-    const modalObserver = new MutationObserver((mutations) => {
-      if (mutations.find((mutation) => mutation.type === 'childList')) {
-        const link = document.querySelector('a[href*="darki.zone"]');
-
-        if (!link) {
-          return;
-        }
-
-        if (autoClose) {
-          link.href = link.href.concat('&auto-close');
-        }
-
-        link.click();
-        link.closest('.z-modal').querySelector('.backdrop-blur-sm').click();
-      }
-    });
-
-    modalObserver.observe(document.body, {childList: true, subtree: true});
+    linkObserver.observe(document.body, {childList: true, subtree: true});
 
     return;
   }
