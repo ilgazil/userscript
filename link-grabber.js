@@ -65,7 +65,7 @@
 
       const button = new DOMParser().parseFromString(reference.outerHTML, 'text/html').body.firstElementChild;
       button.id = 'auto-collector';
-      button.firstElementChild.outerHTML = document.querySelector('[data-testid="ArchiveOutlinedIcon"').outerHTML;
+      button.firstElementChild.outerHTML = document.querySelector('[data-testid="MediaDownloadIcon"').outerHTML;
       button.firstElementChild.classList.remove('text-muted');
       button.firstElementChild.nextSibling.nodeValue = 'Tout télécharger';
 
