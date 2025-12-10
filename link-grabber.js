@@ -4,13 +4,13 @@
 // @description  Grab links from url protectors
 // @author       Monk
 // @match        https://darki.zone/*
-// @match        https://darkiworld2025.com/*
+// @match        https://darkiworld15.com/*
 // ==/UserScript==
 
 (async () => {
   const API_KEY = '';
 
-  if (window.location.host.startsWith('darkiworld2025')) {
+  if (window.location.host.startsWith('darkiworld15')) {
     let autoClose = false;
     let collected = false;
 
@@ -23,20 +23,24 @@
 
       Array
         .from(tableElement.querySelectorAll('button:not([data-attached-event])'))
-        .filter((button) => button.firstElementChild?.alt?.startsWith('1fichier'))
+        .filter((button) => button.querySelector('img')?.alt?.startsWith('1fichier'))
         .forEach((button) => {
           button.setAttribute('data-attached-event', '');
 
           button.addEventListener('click', (event) => {
             collected = false;
-            autoClose = !event.ctrlKey;
+              console.log(event);
+            autoClose = !event.ctrlKey && !event.metaKey;
             event.target.closest('tr').style.backgroundColor = 'orange'
           });
       });
     }
 
     function autoOpenLink() {
-      const link = document.querySelector('a[href*="darki.zone"]');
+      const link = Array.from(document.querySelectorAll('img'))
+        .find(({src}) => src.endsWith('tuto_dl.png'))
+        ?.closest('.overflow-hidden')
+        ?.querySelector('a[href*="darki.zone"]');
 
       if (!link) {
         return;
@@ -83,6 +87,7 @@
         buttons.shift().click();
 
         await new Promise((resolve) => setInterval(() => collected && resolve(), 100));
+        await new Promise((resolve) => setTimeout(() => resolve(), 200));
       }
     }
 
@@ -100,11 +105,11 @@
   }
 
   async function getSubmitButton() {
-    return document.querySelector('main header + div button');
+    return document.querySelector('button.bg-gradient-to-r');
   }
 
   async function getUrlButton() {
-    return document.querySelector('main header + div a');
+    return Array.from(document.querySelectorAll('a')).find(({href}) => href.startsWith('https://1fichier.com/?'));
   }
 
   async function getStore({onChange}) {
@@ -300,7 +305,7 @@
       const button = await getSubmitButton();
 
       if (button) {
-        button.click();
+        setTimeout(() => button.click(), 5000);
         clearInterval(handler);
       };
     }, 100);
@@ -309,6 +314,7 @@
   function onNewUrl(handler) {
     const handle = setInterval(async () => {
       const url = String((await getUrlButton())?.href || '');
+        console.log({url});
 
       if (!url) {
         return;
